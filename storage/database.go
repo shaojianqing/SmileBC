@@ -1,8 +1,10 @@
 package storage
 
+import "github.com/shaojianqing/smilebc/config"
+
 type Database interface {
 }
 
-func NewDatabase() Database {
-	return nil
+func NewDatabase(config config.DBConfig) (Database, error) {
+	return nil, nil
 }
