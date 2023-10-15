@@ -19,6 +19,5 @@ func main() {
 	if err != nil {
 		log.Printf("start smile blockchain node service error:%v", err)
 	}
-
 	log.Println("start smile blockchain node successfully")
 }

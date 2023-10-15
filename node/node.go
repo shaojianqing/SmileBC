@@ -6,8 +6,6 @@ import (
 
 	"github.com/shaojianqing/smilebc/config"
 	"github.com/shaojianqing/smilebc/core/chain"
-	"github.com/shaojianqing/smilebc/core/stat"
-	"github.com/shaojianqing/smilebc/core/trie"
 	"github.com/shaojianqing/smilebc/protocol"
 	"github.com/shaojianqing/smilebc/server"
 	"github.com/shaojianqing/smilebc/storage"
@@ -25,17 +23,7 @@ func NewSmileNode(config *config.Config) *SmileNode {
 		log.Fatalf("fail to initiate chain database storage,error:%v", err)
 	}
 
-	trieDB, err := trie.NewTrieDB(chainDB)
-	if err != nil {
-		log.Fatalf("fail to initiate trie database storage,error:%v", err)
-	}
-
-	stateDB, err := stat.NewStateDB(chainDB, trieDB)
-	if err != nil {
-		log.Fatalf("fail to initiate state database storage,error:%v", err)
-	}
-
-	blockchain := chain.NewBlockchain(chainDB, stateDB)
+	blockchain := chain.NewBlockchain(chainDB)
 
 	server, err := server.NewHttpServer(config.HttpConfig, chainDB, blockchain)
 	if err != nil {

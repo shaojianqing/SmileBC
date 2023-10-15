@@ -11,7 +11,9 @@ type Config struct {
 }
 
 type DBConfig struct {
-	dbFilePath string `json:"dbFilePath"`
+	DBFilePath string `json:"dbFilePath"`
+	CacheSize  int    `json:"cacheSize"`
+	Handlers   int    `json:"handlers"`
 }
 
 type HttpConfig struct {
