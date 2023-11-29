@@ -6,6 +6,7 @@ import (
 
 	"github.com/shaojianqing/smilebc/config"
 	"github.com/shaojianqing/smilebc/core/chain"
+	stat "github.com/shaojianqing/smilebc/core/processor"
 	"github.com/shaojianqing/smilebc/protocol"
 	"github.com/shaojianqing/smilebc/server"
 	"github.com/shaojianqing/smilebc/storage"
@@ -25,12 +26,15 @@ func NewSmileNode(config *config.Config) *SmileNode {
 
 	blockchain := chain.NewBlockchain(chainDB)
 
+	processor := stat.NewStateProcessor(blockchain)
+	blockchain.Processor = processor
+
 	server, err := server.NewHttpServer(config.HttpConfig, chainDB, blockchain)
 	if err != nil {
 		log.Fatalf("fail to initiate http server,error:%v", err)
 	}
 
-	manager, err := protocol.NewSyncManager(config.SyncConfig)
+	manager, err := protocol.NewSyncManager(config.SyncConfig, blockchain)
 	if err != nil {
 		log.Fatalf("fail to initiate sync manager,error:%v", err)
 	}

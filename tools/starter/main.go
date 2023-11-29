@@ -10,7 +10,6 @@ const (
 )
 
 func main() {
-
 	database, err := tools.CreateLevelDB(LevelDBFilepath)
 	if err != nil {
 		fmt.Printf("can not create levelDB, err:%v", err)

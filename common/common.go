@@ -5,7 +5,11 @@ const (
 	AddressLength = 20
 )
 
+type Key []byte
+
 type Code []byte
+
+type Data []byte
 
 type Content []byte
 
@@ -36,6 +40,12 @@ func BytesToAddress(b []byte) Address {
 	var a Address
 	a.SetBytes(b)
 	return a
+}
+
+func BytesToHash(b []byte) Hash {
+	var h Hash
+	h.SetBytes(b)
+	return h
 }
 
 func LeftPadBytes(slice []byte, l int) []byte {

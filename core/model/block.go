@@ -18,6 +18,6 @@ type BlockHeader struct {
 }
 
 type Block struct {
-	blockHeader  *BlockHeader
-	transactions []*Transaction
+	BlockHeader  *BlockHeader
+	Transactions []*Transaction
 }

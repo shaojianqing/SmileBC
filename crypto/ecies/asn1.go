@@ -42,7 +42,7 @@ import (
 	"hash"
 	"math/big"
 
-	"github.com/eth-classic/go-ethereum/crypto/secp256k1"
+	"github.com/shaojianqing/smilebc/crypto/secp256k1"
 )
 
 var (
@@ -61,23 +61,24 @@ func doScheme(base, v []int) asn1.ObjectIdentifier {
 }
 
 // curve OID code taken from crypto/x509, including
-//	- oidNameCurve*
-//	- namedCurveFromOID
-//	- oidFromNamedCurve
+//   - oidNameCurve*
+//   - namedCurveFromOID
+//   - oidFromNamedCurve
+//
 // RFC 5480, 2.1.1.1. Named Curve
 //
-// secp224r1 OBJECT IDENTIFIER ::= {
-//   iso(1) identified-organization(3) certicom(132) curve(0) 33 }
+//	secp224r1 OBJECT IDENTIFIER ::= {
+//	  iso(1) identified-organization(3) certicom(132) curve(0) 33 }
 //
-// secp256r1 OBJECT IDENTIFIER ::= {
-//   iso(1) member-body(2) us(840) ansi-X9-62(10045) curves(3)
-//   prime(1) 7 }
+//	secp256r1 OBJECT IDENTIFIER ::= {
+//	  iso(1) member-body(2) us(840) ansi-X9-62(10045) curves(3)
+//	  prime(1) 7 }
 //
-// secp384r1 OBJECT IDENTIFIER ::= {
-//   iso(1) identified-organization(3) certicom(132) curve(0) 34 }
+//	secp384r1 OBJECT IDENTIFIER ::= {
+//	  iso(1) identified-organization(3) certicom(132) curve(0) 34 }
 //
-// secp521r1 OBJECT IDENTIFIER ::= {
-//   iso(1) identified-organization(3) certicom(132) curve(0) 35 }
+//	secp521r1 OBJECT IDENTIFIER ::= {
+//	  iso(1) identified-organization(3) certicom(132) curve(0) 35 }
 //
 // NB: secp256r1 is equivalent to prime256v1
 type secgNamedCurve asn1.ObjectIdentifier

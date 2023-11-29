@@ -66,7 +66,6 @@ func (hs *HttpServer) initiate() {
 	hs.httpRouter.POST(SendTransaction, hs.sendTransaction)
 	hs.httpRouter.POST(SignTransaction, hs.signTransaction)
 	hs.httpRouter.POST(GetTransaction, hs.getTransaction)
-	hs.httpRouter.POST(GetTransaction, hs.getTransaction)
 	hs.httpRouter.POST(EstimateTransGas, hs.estimateTransactionGas)
 
 	//Initiate wallet and balance related interface
@@ -81,8 +80,11 @@ func (hs *HttpServer) initiate() {
 }
 
 func (hs *HttpServer) StartService() error {
-	if err := hs.httpRouter.Run(hs.serverPort); err != nil {
-		return fmt.Errorf("fail to start the http server:%w", err)
-	}
+	go func() error {
+		if err := hs.httpRouter.Run(hs.serverPort); err != nil {
+			return fmt.Errorf("fail to start the http server:%w", err)
+		}
+		return nil
+	}()
 	return nil
 }

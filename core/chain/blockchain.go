@@ -1,32 +1,28 @@
 package chain
 
 import (
+	core "github.com/shaojianqing/smilebc/core/general"
 	"github.com/shaojianqing/smilebc/core/model"
-	"github.com/shaojianqing/smilebc/core/processor"
 	"github.com/shaojianqing/smilebc/storage"
 )
 
 type Blockchain struct {
-	chainDB   storage.Database
-	processor stat.Processor
+	ChainDB   storage.Database
+	Processor core.Processor
 }
 
 func NewBlockchain(chainDB storage.Database) *Blockchain {
-
 	blockchain := &Blockchain{
-		chainDB: chainDB,
+		ChainDB: chainDB,
 	}
-
-	processor := stat.NewStateProcessor(blockchain)
-	blockchain.processor = processor
 
 	return blockchain
 }
 
-func (bc *Blockchain) InsertTransactions(trxes []model.Transaction) error {
+func (bc *Blockchain) InsertTransactions(transactions []model.Transaction) error {
 	return nil
 }
 
-func (bc *Blockchain) SendTransaction(trx model.Transaction) error {
+func (bc *Blockchain) SendTransaction(transaction model.Transaction) error {
 	return nil
 }

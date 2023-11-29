@@ -2,6 +2,7 @@ package stat
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/big"
 	"sync"
@@ -9,12 +10,14 @@ import (
 	"github.com/shaojianqing/smilebc/common"
 	"github.com/shaojianqing/smilebc/core/trie"
 	"github.com/shaojianqing/smilebc/crypto"
+	"github.com/shaojianqing/smilebc/storage"
 )
 
 type StateDB struct {
-	rootHash common.Hash
-	trieDB   *trie.Database
+	root     common.Hash
+	trie     *trie.Trie
 	journal  *StateJournal
+	database storage.Database
 
 	stateObjectMap   map[common.Address]*StateObject
 	stateObjectDirty map[common.Address]*StateObject
@@ -24,14 +27,19 @@ type StateDB struct {
 	databaseError error
 }
 
-func NewStateDB(rootHash common.Hash, trieDB *trie.Database) (*StateDB, error) {
+func NewStateDB(root common.Hash, database storage.Database) (*StateDB, error) {
 
 	journal := NewStateJournal()
+	trie, err := trie.NewTrieDB(root, database)
+	if err != nil {
+		return nil, fmt.Errorf("fail to create stateDB instance, err:%w", err)
+	}
 
 	stateDB := StateDB{
-		rootHash: rootHash,
-		trieDB:   trieDB,
+		root:     root,
+		trie:     trie,
 		journal:  journal,
+		database: database,
 
 		stateObjectMap:   make(map[common.Address]*StateObject),
 		stateObjectDirty: make(map[common.Address]*StateObject),
@@ -51,7 +59,7 @@ func (db *StateDB) GetAccount(address common.Address) *StateObject {
 	}
 
 	// Get stateAccount from trieDB and it still comes from storage database finally.
-	value, err := db.trieDB.TryGet(address[:])
+	value, err := db.trie.TryGet(address[:])
 	if err != nil {
 		db.databaseError = err
 		return nil
@@ -175,7 +183,7 @@ func (db *StateDB) SetState(address common.Address, key common.Hash, value commo
 }
 
 func (db *StateDB) GetContractCode(codeHash common.Hash) (common.Code, error) {
-	value, err := db.trieDB.TryGet(codeHash[:])
+	value, err := db.database.Get(codeHash[:])
 	return common.Code(value), err
 }
 
