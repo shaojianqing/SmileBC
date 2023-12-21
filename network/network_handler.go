@@ -1,0 +1,78 @@
+package p2p
+
+import (
+	"errors"
+	"fmt"
+	"net"
+	"time"
+)
+
+type handleNodeMessage func(sourceAddress *net.UDPAddr, message NodeMessage) error
+
+type MessageHandler struct {
+	networkManager *NetworkManager
+	handlerMap     map[string]handleNodeMessage
+}
+
+func NewMessageHandler(manager *NetworkManager) *MessageHandler {
+	handlerMap := make(map[string]handleNodeMessage, 4)
+	messageHandler := &MessageHandler{
+		networkManager: manager,
+		handlerMap:     handlerMap,
+	}
+
+	handlerMap[Ping] = messageHandler.handlePingMessage
+	handlerMap[Pong] = messageHandler.handlePongMessage
+	handlerMap[FindNode] = messageHandler.handleFindNodeMessage
+	handlerMap[Neighbors] = messageHandler.handleNeighborsMessage
+
+	return messageHandler
+}
+
+func (h *MessageHandler) handleMessage(sourceAddress *net.UDPAddr, message NodeMessage) error {
+	expiration := time.UnixMilli(message.GetExpiration())
+	if expiration.Before(time.Now()) {
+		return errors.New("message has already expired")
+	}
+
+	if handler, ok := h.handlerMap[message.GetMessageType()]; ok {
+		return handler(sourceAddress, message)
+	}
+
+	return errors.New("message type is not valid")
+}
+
+func (h *MessageHandler) handlePingMessage(sourceAddress *net.UDPAddr, message NodeMessage) error {
+	pingMessage, ok := message.(*PingMessage)
+	if !ok {
+		return errors.New("message is not the expected PingMessage")
+	}
+	selfNodeID := h.networkManager.SelfNode.ID
+	expiration := time.Now().Add(Expiration).UnixMilli()
+	pongMessage := &PongMessage{
+		GenericMessage: GenericMessage{
+			NodeID:      selfNodeID,
+			Expiration:  expiration,
+			MessageType: Pong,
+		},
+		Destination: NewEndpoint(sourceAddress, pingMessage.Source.TCP),
+		ReplyData:   pingMessage.GetMessageHash(),
+	}
+	if err := h.networkManager.send(sourceAddress, pongMessage); err != nil {
+		return fmt.Errorf("send pong message error:%v", err)
+	}
+
+	return nil
+}
+
+func (h *MessageHandler) handlePongMessage(sourceAddress *net.UDPAddr, message NodeMessage) error {
+	return nil
+}
+
+func (h *MessageHandler) handleFindNodeMessage(sourceAddress *net.UDPAddr, message NodeMessage) error {
+	return nil
+}
+
+func (h *MessageHandler) handleNeighborsMessage(sourceAddress *net.UDPAddr, message NodeMessage) error {
+	return nil
+}

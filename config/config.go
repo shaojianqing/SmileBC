@@ -1,8 +1,16 @@
 package config
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
+	"fmt"
 	"os"
+
+	"github.com/shaojianqing/smilebc/crypto"
+)
+
+const (
+	MinimumSeedCount = 2
 )
 
 func LoadConfigFromFile(filepath string) (*Config, error) {
@@ -20,10 +28,42 @@ func LoadConfigFromFile(filepath string) (*Config, error) {
 	return config, nil
 }
 
+func ValidateConfiguration(config *Config) error {
+	if config == nil {
+		return fmt.Errorf("config does not exist")
+	}
+
+	if len(config.CommonConfig.PrivateKeyValue) == 0 {
+		return fmt.Errorf("private key is not set yet")
+	}
+
+	privateKey, err := crypto.HexToECDSA(config.CommonConfig.PrivateKeyValue)
+	if err != nil {
+		return fmt.Errorf("private key is not correct, please check the value")
+	}
+	config.CommonConfig.PrivateKey = privateKey
+
+	if len(config.DBConfig.DBFilePath) == 0 {
+		return fmt.Errorf("database path is not set yet")
+	}
+
+	if len(config.NetworkConfig.SeedNodes) < MinimumSeedCount {
+		return fmt.Errorf("seed nodes is not set correctly")
+	}
+	return nil
+}
+
 type Config struct {
-	DBConfig   DBConfig   `json:"dbConfig"`
-	HttpConfig HttpConfig `json:"httpConfig"`
-	SyncConfig SyncConfig `json:"syncConfig"`
+	CommonConfig  CommonConfig  `json:"commonConfig"`
+	DBConfig      DBConfig      `json:"dbConfig"`
+	HttpConfig    HttpConfig    `json:"httpConfig"`
+	SyncConfig    SyncConfig    `json:"syncConfig"`
+	NetworkConfig NetworkConfig `json:"networkConfig"`
+}
+
+type CommonConfig struct {
+	PrivateKeyValue string `json:"privateKeyValue"`
+	PrivateKey      *ecdsa.PrivateKey
 }
 
 type DBConfig struct {
@@ -37,4 +77,11 @@ type HttpConfig struct {
 }
 
 type SyncConfig struct {
+}
+
+type NetworkConfig struct {
+	ListenAddress string   `mapstructure:"listenAddress"`
+	TCPPort       uint16   `mapstructure:"tcpPort"`
+	UDPPort       uint16   `mapstructure:"udpPort"`
+	SeedNodes     []string `mapstructure:"seedNodes"`
 }

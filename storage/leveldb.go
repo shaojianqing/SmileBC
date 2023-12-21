@@ -3,11 +3,10 @@ package storage
 import (
 	"fmt"
 
+	"github.com/shaojianqing/smilebc/config"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
-
-	"github.com/shaojianqing/smilebc/config"
 )
 
 type LevelDatabase struct {

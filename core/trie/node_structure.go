@@ -71,7 +71,7 @@ func Parse(data common.Data) (Node, error) {
 		}
 		return extensionNode, nil
 	} else {
-		return nil, fmt.Errorf("node type does not match,type:%s", internalNode.Type)
+		return nil, fmt.Errorf("system type does not match,type:%s", internalNode.Type)
 	}
 }
 

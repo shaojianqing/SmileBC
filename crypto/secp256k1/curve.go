@@ -92,7 +92,7 @@ func (BitCurve *BitCurve) IsOnCurve(x, y *big.Int) bool {
 	return x3.Cmp(y2) == 0
 }
 
-//TODO: double check if the function is okay
+// TODO: double check if the function is okay
 // affineFromJacobian reverses the Jacobian transform. See the comment at the
 // top of the file.
 func (BitCurve *BitCurve) affineFromJacobian(x, y, z *big.Int) (xOut, yOut *big.Int) {
@@ -259,7 +259,7 @@ func (BitCurve *BitCurve) ScalarBaseMult(k []byte) (*big.Int, *big.Int) {
 
 var mask = []byte{0xff, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f}
 
-//TODO: double check if it is okay
+// TODO: double check if it is okay
 // GenerateKey returns a public/private key pair. The private key is generated
 // using the given reader, which must return random data.
 func (BitCurve *BitCurve) GenerateKey(rand io.Reader) (priv []byte, x, y *big.Int, err error) {

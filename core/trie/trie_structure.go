@@ -7,14 +7,14 @@ import (
 	"github.com/shaojianqing/smilebc/storage"
 )
 
-type Trie struct {
+type TrieDB struct {
 	rootNode Node
 	rootHash common.Hash
 	database storage.Database
 }
 
-func NewTrieDB(root common.Hash, database storage.Database) (*Trie, error) {
-	tr := &Trie{
+func NewTrieDB(root common.Hash, database storage.Database) (*TrieDB, error) {
+	tr := &TrieDB{
 		rootHash: root,
 		database: database,
 	}
@@ -26,26 +26,26 @@ func NewTrieDB(root common.Hash, database storage.Database) (*Trie, error) {
 	return tr, nil
 }
 
-func (tr *Trie) TryGet(key common.Key) (common.Data, error) {
+func (tr *TrieDB) TryGet(key common.Key) (common.Data, error) {
 	return nil, nil
 }
 
-func (tr *Trie) TryUpdate(key storage.Key, value storage.Value) error {
+func (tr *TrieDB) TryUpdate(key storage.Key, value storage.Value) error {
 	return nil
 }
 
-func (tr *Trie) TryDelete(key storage.Key) error {
+func (tr *TrieDB) TryDelete(key storage.Key) error {
 	return nil
 }
 
-func (tr *Trie) CommitTo(database storage.Database) (common.Hash, error) {
+func (tr *TrieDB) CommitTo(database storage.Database) (common.Hash, error) {
 	return common.Hash{}, nil
 }
 
-func (tr *Trie) resolveHash(key common.Key) (Node, error) {
+func (tr *TrieDB) resolveHash(key common.Key) (Node, error) {
 	data, err := tr.database.Get(storage.Key(key))
 	if err != nil || data == nil {
-		return nil, fmt.Errorf("missing node with key:%s", key)
+		return nil, fmt.Errorf("missing system with key:%s", key)
 	}
 	node, err := Parse(common.Data(data))
 	if err != nil {

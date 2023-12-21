@@ -10,6 +10,10 @@ func (hs *HttpServer) getBlockByNumber(ctx *gin.Context) {
 
 }
 
+func (hs *HttpServer) getBlockByHash(ctx *gin.Context) {
+
+}
+
 func (hs *HttpServer) getBlockHeader(ctx *gin.Context) {
 
 }

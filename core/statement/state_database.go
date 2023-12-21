@@ -15,7 +15,7 @@ import (
 
 type StateDB struct {
 	root     common.Hash
-	trie     *trie.Trie
+	trie     *trie.TrieDB
 	journal  *StateJournal
 	database storage.Database
 

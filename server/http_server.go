@@ -16,6 +16,7 @@ const (
 
 	GetCurrentBlock  = "getCurrentBlock"
 	GetBlockByNumber = "getBlockByNum"
+	GetBlockByHash   = "getBlockByHash"
 	GetBlockHeader   = "getBlockHeader"
 
 	SendTransaction  = "sendTransaction"
@@ -60,6 +61,7 @@ func (hs *HttpServer) initiate() {
 	//Initiate block related interface
 	hs.httpRouter.POST(GetCurrentBlock, hs.getCurrentBlock)
 	hs.httpRouter.POST(GetBlockByNumber, hs.getBlockByNumber)
+	hs.httpRouter.POST(GetBlockByHash, hs.getBlockByHash)
 	hs.httpRouter.POST(GetBlockHeader, hs.getBlockHeader)
 
 	//Initiate transaction related interface
@@ -80,11 +82,8 @@ func (hs *HttpServer) initiate() {
 }
 
 func (hs *HttpServer) StartService() error {
-	go func() error {
-		if err := hs.httpRouter.Run(hs.serverPort); err != nil {
-			return fmt.Errorf("fail to start the http server:%w", err)
-		}
-		return nil
-	}()
+	if err := hs.httpRouter.Run(hs.serverPort); err != nil {
+		return fmt.Errorf("fail to start the http server:%w", err)
+	}
 	return nil
 }

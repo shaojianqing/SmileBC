@@ -1,4 +1,4 @@
-package node
+package system
 
 import (
 	"fmt"
@@ -7,18 +7,18 @@ import (
 	"github.com/shaojianqing/smilebc/config"
 	"github.com/shaojianqing/smilebc/core/chain"
 	stat "github.com/shaojianqing/smilebc/core/processor"
-	"github.com/shaojianqing/smilebc/protocol"
+	sync "github.com/shaojianqing/smilebc/protocol"
 	"github.com/shaojianqing/smilebc/server"
 	"github.com/shaojianqing/smilebc/storage"
 )
 
-type SmileNode struct {
-	syncManager *protocol.SyncManager
-	httpServer  *server.HttpServer
-	blockchain  *chain.Blockchain
+type Smile struct {
+	protocolManager *sync.ProtocolManager
+	httpServer      *server.HttpServer
+	blockchain      *chain.Blockchain
 }
 
-func NewSmileNode(config *config.Config) *SmileNode {
+func NewSmile(config *config.Config) *Smile {
 	chainDB, err := storage.NewDatabase(config.DBConfig)
 	if err != nil {
 		log.Fatalf("fail to initiate chain database storage,error:%v", err)
@@ -34,25 +34,25 @@ func NewSmileNode(config *config.Config) *SmileNode {
 		log.Fatalf("fail to initiate http server,error:%v", err)
 	}
 
-	manager, err := protocol.NewSyncManager(config.SyncConfig, blockchain)
+	manager, err := sync.NewProtocolManager(config.SyncConfig, blockchain)
 	if err != nil {
 		log.Fatalf("fail to initiate sync manager,error:%v", err)
 	}
 
-	node := &SmileNode{
-		httpServer:  server,
-		syncManager: manager,
-		blockchain:  blockchain,
+	node := &Smile{
+		blockchain:      blockchain,
+		httpServer:      server,
+		protocolManager: manager,
 	}
 	return node
 }
 
-func (sn *SmileNode) StartService() error {
-	if err := sn.httpServer.StartService(); err != nil {
+func (sm *Smile) StartService() error {
+	if err := sm.httpServer.StartService(); err != nil {
 		return fmt.Errorf("fail to start http server, err:%w", err)
 	}
 
-	if err := sn.syncManager.StartSync(); err != nil {
+	if err := sm.protocolManager.Start(); err != nil {
 		return fmt.Errorf("fail to start sync process, err:%w", err)
 	}
 
