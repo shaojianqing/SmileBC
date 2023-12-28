@@ -3,7 +3,10 @@ package p2p
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"errors"
 	"fmt"
+	"github.com/shaojianqing/smilebc/crypto/secp256k1"
+	"math/big"
 	"net"
 	"time"
 
@@ -47,6 +50,17 @@ func PublicKey2NodeID(pub *ecdsa.PublicKey) NodeID {
 	}
 	copy(id[:], content[1:])
 	return id
+}
+
+func NodeID2PublicKey(nodeID NodeID) (*ecdsa.PublicKey, error) {
+	p := &ecdsa.PublicKey{Curve: secp256k1.S256(), X: new(big.Int), Y: new(big.Int)}
+	half := len(nodeID) / 2
+	p.X.SetBytes(nodeID[:half])
+	p.Y.SetBytes(nodeID[half:])
+	if !p.Curve.IsOnCurve(p.X, p.Y) {
+		return nil, errors.New("id is invalid secp256k1 curve point")
+	}
+	return p, nil
 }
 
 var leadingZeroCount = [256]int{
@@ -109,4 +123,8 @@ func CompareDistance(target, a, b common.Hash) int {
 		}
 	}
 	return 0
+}
+
+func IsReserveIP(ip net.IP) bool {
+	return false
 }

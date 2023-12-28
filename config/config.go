@@ -1,12 +1,10 @@
 package config
 
 import (
-	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"os"
-
-	"github.com/shaojianqing/smilebc/crypto"
+	"time"
 )
 
 const (
@@ -33,15 +31,9 @@ func ValidateConfiguration(config *Config) error {
 		return fmt.Errorf("config does not exist")
 	}
 
-	if len(config.CommonConfig.PrivateKeyValue) == 0 {
+	if len(config.CommonConfig.PrivateKey) == 0 {
 		return fmt.Errorf("private key is not set yet")
 	}
-
-	privateKey, err := crypto.HexToECDSA(config.CommonConfig.PrivateKeyValue)
-	if err != nil {
-		return fmt.Errorf("private key is not correct, please check the value")
-	}
-	config.CommonConfig.PrivateKey = privateKey
 
 	if len(config.DBConfig.DBFilePath) == 0 {
 		return fmt.Errorf("database path is not set yet")
@@ -57,13 +49,13 @@ type Config struct {
 	CommonConfig  CommonConfig  `json:"commonConfig"`
 	DBConfig      DBConfig      `json:"dbConfig"`
 	HttpConfig    HttpConfig    `json:"httpConfig"`
+	P2PConfig     P2PConfig     `json:"p2pConfig"`
 	SyncConfig    SyncConfig    `json:"syncConfig"`
 	NetworkConfig NetworkConfig `json:"networkConfig"`
 }
 
 type CommonConfig struct {
-	PrivateKeyValue string `json:"privateKeyValue"`
-	PrivateKey      *ecdsa.PrivateKey
+	PrivateKey string `json:"privateKey"`
 }
 
 type DBConfig struct {
@@ -79,9 +71,16 @@ type HttpConfig struct {
 type SyncConfig struct {
 }
 
+type P2PConfig struct {
+	ListenAddress    string        `json:"listenAddress"`
+	DialTimeout      time.Duration `json:"dialTimeout"`
+	HandshakeTimeout string        `json:"handshakeTimeout"`
+	MaxPeerCount     uint32        `json:"maxPeerCount"`
+}
+
 type NetworkConfig struct {
-	ListenAddress string   `mapstructure:"listenAddress"`
-	TCPPort       uint16   `mapstructure:"tcpPort"`
-	UDPPort       uint16   `mapstructure:"udpPort"`
-	SeedNodes     []string `mapstructure:"seedNodes"`
+	ListenAddress string   `json:"listenAddress"`
+	TCPPort       uint16   `json:"tcpPort"`
+	UDPPort       uint16   `json:"udpPort"`
+	SeedNodes     []string `json:"seedNodes"`
 }

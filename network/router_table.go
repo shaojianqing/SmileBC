@@ -1,6 +1,8 @@
 package p2p
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"sync"
 	"time"
 
@@ -90,6 +92,28 @@ func (table *RouterTable) StartRefresh() {
 
 }
 
+func (table *RouterTable) GetRandomNodeList(size int) []*Node {
+	table.mutex.Lock()
+	defer table.mutex.Unlock()
+
+	randomNodeList := make([]*Node, size)
+	allNodeList := make([]*Node, 0)
+	for _, bucket := range table.bucketList {
+		if len(bucket.activeEntries) == 0 {
+			continue
+		}
+		for _, node := range bucket.activeEntries {
+			allNodeList = append(allNodeList, node)
+		}
+	}
+
+	indexLimit := uint32(len(allNodeList))
+	for i := 0; i < size; {
+		randomNodeList[i] = allNodeList[randomIndex(indexLimit)]
+	}
+	return randomNodeList
+}
+
 func (table *RouterTable) GetClosestNodes(nodeID NodeID) *ClosestNodeSet {
 	closestNodeSet := &ClosestNodeSet{
 		TargetHash: crypto.Keccak256Hash(nodeID[:]),
@@ -110,7 +134,7 @@ func (table *RouterTable) AddNode(node *Node) {
 	table.mutex.Lock()
 	defer table.mutex.Unlock()
 
-	distance := LogDistance(node.Hash, table.self.Hash)
+	distance := LogDistance(table.self.Hash, node.Hash)
 	bucket := table.bucketList[distance]
 	if bucket.bump(node) {
 		return
@@ -139,7 +163,7 @@ func (table *RouterTable) InjectNodes(nodes []*Node) {
 	for _, node := range nodes {
 		// Calculate the logarithmic distance of self node and remote note, and then
 		// get the corresponding bucket and check whether it contains the remote node
-		distance := LogDistance(node.Hash, table.self.Hash)
+		distance := LogDistance(table.self.Hash, node.Hash)
 		bucket := table.bucketList[distance]
 		if nodeInBucketActive(node, bucket) {
 			continue
@@ -152,6 +176,33 @@ func (table *RouterTable) InjectNodes(nodes []*Node) {
 			table.count++
 		}
 	}
+}
+
+func (table *RouterTable) DeleteNode(node *Node) {
+	table.mutex.Lock()
+	defer table.mutex.Unlock()
+
+	distance := LogDistance(table.self.Hash, node.Hash)
+	bucket := table.bucketList[distance]
+	for i, entry := range bucket.activeEntries {
+		if entry.ID == node.ID {
+			bucket.activeEntries = append(bucket.activeEntries[:i], bucket.activeEntries[i+1:]...)
+			return
+		}
+	}
+}
+
+func (table *RouterTable) ExistNodeInTable(nodeID NodeID) bool {
+	hash := crypto.Keccak256Hash(nodeID[:])
+	distance := LogDistance(table.self.Hash, hash)
+	bucket := table.bucketList[distance]
+
+	for _, entry := range bucket.activeEntries {
+		if entry.ID == nodeID {
+			return true
+		}
+	}
+	return false
 }
 
 // Check whether the node has been included within the activeEntries in bucket, and the logic is simple here
@@ -190,4 +241,14 @@ func deleteNode(list []*Node, n *Node) []*Node {
 		}
 	}
 	return list
+}
+
+// calculate the random index for all index list
+func randomIndex(limit uint32) uint32 {
+	if limit == 0 {
+		return 0
+	}
+	var b [4]byte
+	rand.Read(b[:])
+	return binary.BigEndian.Uint32(b[:]) % limit
 }

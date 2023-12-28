@@ -21,3 +21,7 @@ type Block struct {
 	BlockHeader  *BlockHeader
 	Transactions []*Transaction
 }
+
+func (b *Block) GetHash() common.Hash {
+	return b.BlockHeader.RootHash
+}

@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"fmt"
+	"github.com/shaojianqing/smilebc/crypto"
 	"log"
 	"net"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 const (
 	UDP        = "udp"
+	TCP        = "tcp"
 	BufferSize = 1280
 
 	Expiration = 20 * time.Second
@@ -29,7 +31,10 @@ type NetworkManager struct {
 }
 
 func NewNetworkManager(config config.Config) (*NetworkManager, error) {
-	privateKey := config.CommonConfig.PrivateKey
+	privateKey, err := crypto.HexToECDSA(config.CommonConfig.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("convert private key error:%v", err)
+	}
 	nodeID := PublicKey2NodeID(&privateKey.PublicKey)
 	networkConfig := config.NetworkConfig
 	listenAddress, err := net.ResolveUDPAddr(UDP, networkConfig.ListenAddress)
@@ -100,11 +105,25 @@ func (nm *NetworkManager) handle(sourceAddress *net.UDPAddr, data []byte) error 
 	return nil
 }
 
-func (nm *NetworkManager) ping(destNodeID NodeID, destAddress *net.UDPAddr) error {
-	return nil
+func (nm *NetworkManager) ping(destNodeID NodeID, sourceAddress, destAddress *net.UDPAddr) error {
+	pingMessage := NewPingMessage(nm.SelfNode.ID, sourceAddress, destAddress)
+	return nm.send(destAddress, pingMessage)
+}
+
+func (nm *NetworkManager) findNodeList(destAddress *net.UDPAddr, targetNodeID NodeID) error {
+	findNodeMessage := NewFindNodeMessage(nm.SelfNode.ID, targetNodeID)
+	return nm.send(destAddress, findNodeMessage)
 }
 
 func (nm *NetworkManager) send(destinationAddress *net.UDPAddr, message NodeMessage) error {
+	content, err := encodeMessage(message)
+	if err != nil {
+		return fmt.Errorf("encode message error:%v", err)
+	}
+	_, err = nm.UDPConn.WriteToUDP(content, destinationAddress)
+	if err != nil {
+		return fmt.Errorf("write message to UDP error:%v", err)
+	}
 	return nil
 }
 

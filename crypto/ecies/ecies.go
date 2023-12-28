@@ -34,6 +34,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/subtle"
 	"fmt"
 	"hash"
@@ -109,6 +110,15 @@ func GenerateKey(rand io.Reader, curve elliptic.Curve, params *ECIESParams) (prv
 	}
 	prv.PublicKey.Params = params
 	return
+}
+
+func GenerateAESKey(length int) ([]byte, error) {
+	key := make([]byte, length)
+	_, err := rand.Read(key)
+	if err != nil {
+		return nil, err
+	}
+	return key, nil
 }
 
 // MaxSharedKeyLength returns the maximum length of the shared key the

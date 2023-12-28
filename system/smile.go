@@ -18,7 +18,7 @@ type Smile struct {
 	blockchain      *chain.Blockchain
 }
 
-func NewSmile(config *config.Config) *Smile {
+func NewSmile(config config.Config) *Smile {
 	chainDB, err := storage.NewDatabase(config.DBConfig)
 	if err != nil {
 		log.Fatalf("fail to initiate chain database storage,error:%v", err)
@@ -34,7 +34,7 @@ func NewSmile(config *config.Config) *Smile {
 		log.Fatalf("fail to initiate http server,error:%v", err)
 	}
 
-	manager, err := sync.NewProtocolManager(config.SyncConfig, blockchain)
+	manager, err := sync.NewProtocolManager(config, blockchain)
 	if err != nil {
 		log.Fatalf("fail to initiate sync manager,error:%v", err)
 	}

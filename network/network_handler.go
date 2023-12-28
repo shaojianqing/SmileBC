@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+const (
+	MaxNeighborsCount = 8
+)
+
 type handleNodeMessage func(sourceAddress *net.UDPAddr, message NodeMessage) error
 
 type MessageHandler struct {
@@ -70,9 +74,52 @@ func (h *MessageHandler) handlePongMessage(sourceAddress *net.UDPAddr, message N
 }
 
 func (h *MessageHandler) handleFindNodeMessage(sourceAddress *net.UDPAddr, message NodeMessage) error {
+	findNodeMessage, ok := message.(*FindNodeMessage)
+	if !ok {
+		return errors.New("message is not the expected FindNodeMessage")
+	}
+	manager := h.networkManager
+	routeTable := manager.RouterTable
+	if !routeTable.ExistNodeInTable(findNodeMessage.NodeID) {
+		return fmt.Errorf("unknown node from FindNodeMessage, nodeID:%s", findNodeMessage.NodeID)
+	}
+
+	closestNodeSet := routeTable.GetClosestNodes(findNodeMessage.Target)
+	nodeList := make([]Endpoint, 0)
+	for _, node := range closestNodeSet.ClosestNodes {
+		endpoint := NewEndpointWithNodeID(node.IP, node.UDP, node.TCP, node.ID)
+		nodeList = append(nodeList, endpoint)
+		if len(nodeList) > MaxNeighborsCount {
+			neighborsMessage := NewNeighborsMessage(manager.SelfNode.ID, nodeList)
+			if err := manager.send(sourceAddress, neighborsMessage); err != nil {
+				return fmt.Errorf("send neighbors message error:%v", err)
+			}
+			nodeList = nodeList[:0]
+		}
+	}
+
 	return nil
 }
 
 func (h *MessageHandler) handleNeighborsMessage(sourceAddress *net.UDPAddr, message NodeMessage) error {
+	neighborsMessage, ok := message.(*NeighborsMessage)
+	if !ok {
+		return errors.New("message is not the expected NeighborsMessage")
+	}
+
+	manager := h.networkManager
+	routeTable := manager.RouterTable
+	if !routeTable.ExistNodeInTable(neighborsMessage.NodeID) {
+		return fmt.Errorf("unknown node from NeighborsMessage, nodeID:%s", neighborsMessage.NodeID)
+	}
+
+	for _, endpoint := range neighborsMessage.NodeList {
+		if IsReserveIP(endpoint.IP) {
+			continue
+		}
+		node := NewNode(endpoint.NodeID, endpoint.IP, endpoint.TCP, endpoint.UDP)
+		routeTable.AddNode(node)
+	}
+
 	return nil
 }
