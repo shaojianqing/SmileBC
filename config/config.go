@@ -55,6 +55,8 @@ type Config struct {
 }
 
 type CommonConfig struct {
+	Network    string `json:"network"`
+	Version    string `json:"version"`
 	PrivateKey string `json:"privateKey"`
 }
 

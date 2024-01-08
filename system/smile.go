@@ -31,29 +31,29 @@ func NewSmile(config config.Config) *Smile {
 
 	server, err := server.NewHttpServer(config.HttpConfig, chainDB, blockchain)
 	if err != nil {
-		log.Fatalf("fail to initiate http server,error:%v", err)
+		log.Fatalf("fail to initiate http server, error:%v", err)
 	}
 
-	manager, err := sync.NewProtocolManager(config, blockchain)
+	protocolManager, err := sync.NewProtocolManager(config, blockchain)
 	if err != nil {
-		log.Fatalf("fail to initiate sync manager,error:%v", err)
+		log.Fatalf("fail to initiate protocol manager, error:%v", err)
 	}
 
 	node := &Smile{
-		blockchain:      blockchain,
 		httpServer:      server,
-		protocolManager: manager,
+		blockchain:      blockchain,
+		protocolManager: protocolManager,
 	}
 	return node
 }
 
 func (sm *Smile) StartService() error {
 	if err := sm.httpServer.StartService(); err != nil {
-		return fmt.Errorf("fail to start http server, err:%w", err)
+		return fmt.Errorf("fail to start http server, error:%v", err)
 	}
 
 	if err := sm.protocolManager.Start(); err != nil {
-		return fmt.Errorf("fail to start sync process, err:%w", err)
+		return fmt.Errorf("fail to start sync process, error:%v", err)
 	}
 
 	return nil

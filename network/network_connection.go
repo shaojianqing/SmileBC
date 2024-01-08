@@ -23,11 +23,6 @@ type MessageConn interface {
 	MessageWriter
 }
 
-func Send(writer MessageWriter, msgType string, body interface{}) error {
-	message := &Message{MessageType: msgType, MessageBody: body}
-	return writer.Write(message)
-}
-
 type MConnection struct {
 	conn   net.Conn
 	secret *Secret

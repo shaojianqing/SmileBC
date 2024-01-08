@@ -26,3 +26,7 @@ func (bc *Blockchain) InsertTransactions(transactions []model.Transaction) error
 func (bc *Blockchain) SendTransaction(transaction model.Transaction) error {
 	return nil
 }
+
+func (bc *Blockchain) GetGenesisBlock() *model.Block {
+	return nil
+}

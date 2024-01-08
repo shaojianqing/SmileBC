@@ -1,7 +1,8 @@
-package sync
+package proto
 
 import (
 	"fmt"
+
 	"github.com/shaojianqing/smilebc/config"
 	"github.com/shaojianqing/smilebc/core/chain"
 	"github.com/shaojianqing/smilebc/core/model"
@@ -9,11 +10,12 @@ import (
 )
 
 type ProtocolManager struct {
-	syncConfig     config.SyncConfig
-	blockchain     *chain.Blockchain
-	peerManager    *p2p.PeerManager
-	p2pServer      *p2p.P2PServer
-	networkManager *p2p.NetworkManager
+	config          config.Config
+	blockchain      *chain.Blockchain
+	peerManager     *p2p.PeerManager
+	p2pServer       *p2p.P2PServer
+	networkManager  *p2p.NetworkManager
+	protocolHandler *ProtocolHandler
 }
 
 func NewProtocolManager(config config.Config, blockchain *chain.Blockchain) (*ProtocolManager, error) {
@@ -28,13 +30,23 @@ func NewProtocolManager(config config.Config, blockchain *chain.Blockchain) (*Pr
 		return nil, err
 	}
 
-	return &ProtocolManager{
-		syncConfig:     config.SyncConfig,
-		blockchain:     blockchain,
-		p2pServer:      p2pServer,
-		peerManager:    peerManager,
-		networkManager: networkManager,
-	}, nil
+	protocolHandler, err := NewProtocolHandler()
+	if err != nil {
+		return nil, err
+	}
+
+	protocolManager := &ProtocolManager{
+		config:          config,
+		blockchain:      blockchain,
+		p2pServer:       p2pServer,
+		peerManager:     peerManager,
+		networkManager:  networkManager,
+		protocolHandler: protocolHandler,
+	}
+	peerManager.SetProtocolHandler(protocolManager)
+	protocolHandler.SetProtocolManager(protocolManager)
+
+	return protocolManager, nil
 }
 
 func (pm *ProtocolManager) Start() error {
@@ -50,6 +62,23 @@ func (pm *ProtocolManager) Start() error {
 	}
 
 	return nil
+}
+
+func (pm *ProtocolManager) HandlePeerMessage(peer *p2p.Peer) error {
+	commonConfig := pm.config.CommonConfig
+	genesisBlock := pm.blockchain.GetGenesisBlock()
+	if err := peer.PerformHandshake(commonConfig.Network,
+		commonConfig.Version, genesisBlock.BlockHeader.RootHash); err != nil {
+		return fmt.Errorf("peer performs handshake error:%v", err)
+	}
+
+	for {
+		// We handle all the peer message in a loop in separate goroutine, and
+		// it returns error directly in case of error raising
+		if err := pm.protocolHandler.Handle(peer); err != nil {
+			return fmt.Errorf("protocol handle peer message error:%v", err)
+		}
+	}
 }
 
 func (pm *ProtocolManager) BroadcastBlock(block *model.Block) error {

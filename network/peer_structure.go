@@ -12,13 +12,10 @@ import (
 const (
 	MaxKnownBlocks       = 1024
 	MaxKnownTransactions = 32768
-
-	BlockType        = "block"
-	TransactionsType = "transactions"
 )
 
 type Peer struct {
-	id    string
+	id    NodeID
 	conn  MessageConn
 	mutex sync.RWMutex
 
@@ -27,9 +24,8 @@ type Peer struct {
 }
 
 func NewPeer(nodeID NodeID, connection MessageConn) *Peer {
-	peerId := string(nodeID[:])
 	return &Peer{
-		id:   peerId,
+		id:   nodeID,
 		conn: connection,
 
 		knownBlockSet:       set.New(),
@@ -37,18 +33,20 @@ func NewPeer(nodeID NodeID, connection MessageConn) *Peer {
 	}
 }
 
+func (p *Peer) GetID() NodeID {
+	return p.id
+}
+
 func (p *Peer) StartRunning() {
 
 }
 
-func (p *Peer) GetId() string {
-	return p.id
-}
-
 func (p *Peer) SendBlock(block *model.Block) error {
-	if err := Send(p.conn, BlockType, block); err != nil {
-		return fmt.Errorf("send block err:%v", err)
+	message := &Message{MessageType: NewBlockResp, MessageBody: block}
+	if err := p.WriteMessage(message); err != nil {
+		return fmt.Errorf("send block error:%v", err)
 	}
+
 	p.MarkBlock(block.GetHash())
 	return nil
 }
@@ -58,14 +56,23 @@ func (p *Peer) SendTransactions(transactions []*model.Transaction) error {
 		return nil
 	}
 
-	if err := Send(p.conn, TransactionsType, transactions); err != nil {
-		return fmt.Errorf("send transactions err:%v", err)
+	message := &Message{MessageType: TransactionsResp, MessageBody: transactions}
+	if err := p.WriteMessage(message); err != nil {
+		return fmt.Errorf("send transactions error:%v", err)
 	}
 
 	for _, transaction := range transactions {
 		p.MarkTransaction(transaction.GetHash())
 	}
 	return nil
+}
+
+func (p *Peer) ReadMessage() (*Message, error) {
+	return p.conn.Read()
+}
+
+func (p *Peer) WriteMessage(message *Message) error {
+	return p.conn.Write(message)
 }
 
 func (p *Peer) MarkBlock(hash common.Hash) {
